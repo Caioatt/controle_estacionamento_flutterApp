@@ -1,0 +1,321 @@
+import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final database = openDatabase(
+    join(await getDatabasesPath(), 'vehicles_database.db'),
+    onCreate: (db, version) {
+      return db.execute(
+        "CREATE TABLE vehicles(id INTEGER PRIMARY KEY AUTOINCREMENT, modelo TEXT, horaEntrada TEXT, placa TEXT, nomeCliente TEXT, telefoneCliente TEXT)",
+      );
+    },
+    version: 1,
+  );
+
+  runApp(MyApp(database));
+}
+
+class Vehicle {
+  final int? id;
+  final String modelo;
+  final String horaEntrada;
+  final String placa;
+  final String nomeCliente;
+  final String telefoneCliente;
+
+  Vehicle({
+    this.id,
+    required this.modelo,
+    required this.horaEntrada,
+    required this.placa,
+    required this.nomeCliente,
+    required this.telefoneCliente,
+  });
+}
+
+class MyApp extends StatelessWidget {
+  final Future<Database> database;
+
+  MyApp(this.database);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: VehicleListScreen(database),
+    );
+  }
+}
+
+class VehicleListScreen extends StatefulWidget {
+  final Future<Database> database;
+
+  VehicleListScreen(this.database);
+
+  @override
+  _VehicleListScreenState createState() => _VehicleListScreenState();
+}
+
+class _VehicleListScreenState extends State<VehicleListScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Controle de Estacionamento'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {});
+            },
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Vehicle>>(
+        future: getVehicles(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          final vehicles = snapshot.data!;
+          return ListView.builder(
+            itemCount: vehicles.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text('Modelo: ${vehicles[index].modelo}'),
+                subtitle: Text('Placa: ${vehicles[index].placa}'),
+                trailing: ElevatedButton(
+                  onPressed: () {
+                    _showVehicleDetails(context, vehicles[index]);
+                  },
+                  child: Text('Ver Mais'),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  VehicleEntryScreen(database: widget.database),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<List<Vehicle>> getVehicles() async {
+    final Database db = await widget.database;
+    final List<Map<String, dynamic>> maps = await db.query('vehicles');
+    return List.generate(maps.length, (i) {
+      return Vehicle(
+        id: maps[i]['id'],
+        modelo: maps[i]['modelo'],
+        horaEntrada: maps[i]['horaEntrada'],
+        placa: maps[i]['placa'],
+        nomeCliente: maps[i]['nomeCliente'],
+        telefoneCliente: maps[i]['telefoneCliente'],
+      );
+    });
+  }
+
+  void _showVehicleDetails(BuildContext context, Vehicle vehicle) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Detalhes do Veículo'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Modelo: ${vehicle.modelo}'),
+              Text('Placa: ${vehicle.placa}'),
+              Text('Hora de Entrada: ${vehicle.horaEntrada}'),
+              Text('Nome do Cliente: ${vehicle.nomeCliente}'),
+              Text('Telefone do Cliente: ${vehicle.telefoneCliente}'),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                _deleteVehicle(vehicle);
+                Navigator.of(context).pop();
+              },
+              child: Text('Excluir Veículo'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteVehicle(Vehicle vehicle) async {
+    final Database db = await widget.database;
+    await db.delete(
+      'vehicles',
+      where: "id = ?",
+      whereArgs: [vehicle.id],
+    );
+    setState(() {});
+  }
+}
+
+
+
+
+
+
+
+
+
+class VehicleEntryScreen extends StatelessWidget {
+  final TextEditingController modeloController = TextEditingController();
+  final TextEditingController horaEntradaController = TextEditingController();
+  final TextEditingController placaController = TextEditingController();
+  final TextEditingController nomeClienteController = TextEditingController();
+  final TextEditingController telefoneClienteController =
+      TextEditingController();
+  final Future<Database> database;
+
+  VehicleEntryScreen({required this.database});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Cadastrar Veículo'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: modeloController,
+              decoration: InputDecoration(labelText: 'Modelo'),
+            ),
+            TextField(
+              controller: horaEntradaController,
+              decoration: InputDecoration(labelText: 'Hora de Entrada'),
+            ),
+            TextField(
+              controller: placaController,
+              decoration: InputDecoration(labelText: 'Placa'),
+            ),
+            TextField(
+              controller: nomeClienteController,
+              decoration: InputDecoration(labelText: 'Nome do Cliente'),
+            ),
+            TextField(
+              controller: telefoneClienteController,
+              decoration: InputDecoration(labelText: 'Telefone do Cliente'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                addVehicle(
+                  Vehicle(
+                    modelo: modeloController.text,
+                    horaEntrada: horaEntradaController.text,
+                    placa: placaController.text,
+                    nomeCliente: nomeClienteController.text,
+                    telefoneCliente: telefoneClienteController.text,
+                  ),
+                );
+                Navigator.pop(context);
+              },
+              child: Text('Salvar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> addVehicle(Vehicle vehicle) async {
+    final Database db = await database;
+    await db.insert(
+      'vehicles',
+      vehicle.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+}
+
+extension VehicleExtension on Vehicle {
+  Map<String, dynamic> toMap() {
+    return {
+      'modelo': modelo,
+      'horaEntrada': horaEntrada,
+      'placa': placa,
+      'nomeCliente': nomeCliente,
+      'telefoneCliente': telefoneCliente,
+    };
+  }
+}
+
+
+
+
+
+
+
+
+
+
+////OUTRA TELA
+
+import 'package:flutter/material.dart';
+import 'main.dart';
+class VehicleDetailScreen extends StatelessWidget {
+  final Vehicle vehicle;
+  final Function(Vehicle) onDelete;
+
+  VehicleDetailScreen({required this.vehicle, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Modelo: ${vehicle.modelo}'),
+            Text('Placa: ${vehicle.placa}'),
+            Text('Hora de Entrada: ${vehicle.horaEntrada}'),
+            Text('Nome do Cliente: ${vehicle.nomeCliente}'),
+            Text('Telefone do Cliente: ${vehicle.telefoneCliente}'),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                onDelete(vehicle);
+                Navigator.of(context).pop();
+              },
+              child: Text('Excluir Veículo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
