@@ -62,13 +62,7 @@ class SplashScreen extends StatelessWidget {
               SizedBox(
                 height: 80,
               ),
-              Text(
-                '*esta é uma build BETA*',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13),
-              ),
+              
               Image.asset(
                 'lib/assets/imgs/logo1.png',
                 height: 200,
