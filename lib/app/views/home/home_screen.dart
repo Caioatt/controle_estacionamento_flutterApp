@@ -19,10 +19,18 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromARGB(255, 15, 41, 125),
-        title: Text('Controle de Estacionamento'),
+        title: Text(
+          'Controle de Estacionamento',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: Icon(
+              Icons.refresh,
+              color: Colors.white,
+            ),
             onPressed: () {
               setState(() {});
             },
@@ -50,13 +58,17 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
                   ),
                   trailing: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        primary: Color.fromARGB(
-                            255, 15, 41, 125) // Altere para a cor desejada
+                        backgroundColor: Color.fromARGB(
+                            255, 15, 41, 125) 
+
                         ),
                     onPressed: () {
                       _showVehicleDetails(context, vehicles[index]);
                     },
-                    child: Text('Ver Mais'),
+                    child: Text(
+                      'Ver Mais',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 );
               },
@@ -66,7 +78,10 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Color.fromARGB(255, 15, 41, 125),
-        child: Icon(Icons.add),
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
         onPressed: () {
           Navigator.push(
             context,
@@ -149,13 +164,16 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     primary: Color.fromARGB(
-                        255, 18, 67, 231) // Altere para a cor desejada
+                        255, 18, 67, 231)
                     ),
                 onPressed: () {
                   _deleteVehicle(vehicle);
                   Navigator.of(context).pop();
                 },
-                child: Text('Veiculo saiu'),
+                child: Text(
+                  'Veiculo saiu',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               SizedBox(
                 width: 2,
@@ -163,12 +181,15 @@ class _VehicleListScreenState extends State<VehicleListScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     primary: Color.fromARGB(
-                        255, 18, 67, 231) // Altere para a cor desejada
+                        255, 18, 67, 231) 
                     ),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('Fechar'),
+                child: Text(
+                  'Fechar',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
